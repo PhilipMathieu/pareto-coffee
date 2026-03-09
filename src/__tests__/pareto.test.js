@@ -54,10 +54,8 @@ describe("paretoFrontier", () => {
       { id: "2", distance: 100, rating: 4.5 },
     ];
     const result = paretoFrontier(shops);
-    // The first encountered (lower id by sort order) at distance 100 with rating 4.0
-    // then 4.5 > 4.0, so both are frontier? No: sorted by distance they're equal.
-    // First shop at dist 100 with rating 4.0 → frontier (4.0 > -Inf)
-    // Second shop at dist 100 with rating 4.5 → frontier (4.5 > 4.0)
+    // When shops have equal distance, both are included in the frontier
+    // if each has a progressively higher rating.
     expect(result).toHaveLength(2);
   });
 
