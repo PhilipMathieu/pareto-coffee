@@ -58,7 +58,7 @@ export default function ScatterPlot({ shops, frontierIds, selectedShopId, onShop
       xaxis: { title: "Distance (m)", zeroline: false },
       yaxis: { title: "Rating", range: [0, 5.2], zeroline: false },
       margin: { t: 20, r: 20, b: 50, l: 50 },
-      legend: { x: 1, xanchor: "right", y: 1 },
+      legend: { x: 1, xanchor: "right", y: 0, yanchor: "bottom" },
       hovermode: "closest",
       plot_bgcolor: "#fafafa",
       paper_bgcolor: "white",

@@ -17,4 +17,16 @@ export const CATEGORIES = {
     allowedPrimaryTypes: ["bar", "pub"],
     enabled: false,
   },
+  lunch: {
+    label: "Lunch",
+    query: "lunch restaurant",
+    allowedPrimaryTypes: ["restaurant", "fast_food_restaurant", "sandwich_shop", "meal_takeaway"],
+    enabled: false,
+  },
+  dinner: {
+    label: "Dinner",
+    query: "dinner restaurant",
+    allowedPrimaryTypes: ["restaurant", "fine_dining_restaurant", "steak_house", "italian_restaurant", "american_restaurant"],
+    enabled: false,
+  },
 };

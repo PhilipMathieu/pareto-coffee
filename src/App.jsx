@@ -43,10 +43,20 @@ export default function App() {
       setWalkingRoute(null);
 
       try {
-        // Geocode address
+        // Geocode address with timeout
         const { Geocoder } = await window.google.maps.importLibrary("geocoding");
         const geocoder = new Geocoder();
-        const { results } = await geocoder.geocode({ address });
+
+        const geocodeWithTimeout = () => {
+          return Promise.race([
+            geocoder.geocode({ address }),
+            new Promise((_, reject) =>
+              setTimeout(() => reject(new Error("Geocoding timed out. The API key may not be authorized for this domain.")), 10000)
+            )
+          ]);
+        };
+
+        const { results } = await geocodeWithTimeout();
 
         if (!results || results.length === 0) {
           setError("Couldn't find that address. Try being more specific.");
@@ -84,11 +94,15 @@ export default function App() {
       } catch (err) {
         console.error(err);
         if (err.message?.includes("REQUEST_DENIED") || err.message?.includes("InvalidValueError")) {
-          setError("Invalid API key or API not enabled. Check your VITE_GOOGLE_MAPS_API_KEY.");
+          setError("Invalid API key or API not enabled. Check your Google Cloud Console settings.");
         } else if (err.message?.includes("OVER_QUERY_LIMIT")) {
-          setError("API quota exceeded. Try again later.");
+          setError("API quota exceeded. Please try again later.");
+        } else if (err.message?.includes("RefererNotAllowed") || err.code === "RefererNotAllowedMapError") {
+          setError("Your domain is not authorized for this API key. Add your URL to allowed referrers in Google Cloud Console.");
+        } else if (err.message?.includes("timed out")) {
+          setError("Request timed out. The API key may not be properly configured.");
         } else {
-          setError("An error occurred: " + err.message);
+          setError("An error occurred. Please try again.");
         }
       } finally {
         setLoading(false);

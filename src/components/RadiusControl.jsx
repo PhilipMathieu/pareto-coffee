@@ -1,6 +1,6 @@
 import React from "react";
 
-const RADIUS_OPTIONS = [500, 750, 1000, 1500, 2000, 3000];
+const RADIUS_OPTIONS = [500, 750, 1000, 1500, 2000, 3000, 4000, 5000];
 
 export default function RadiusControl({ value, onChange }) {
   return (

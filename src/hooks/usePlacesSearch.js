@@ -1,23 +1,22 @@
 import { haversine } from "../lib/geo.js";
 
-const MAX_RADIUS = 3000; // meters
+const MAX_RADIUS = 5000; // meters
 
 /**
  * Search for places using Google Places Text Search (New).
  * Paginates until exhausted or limit reached.
  */
 async function searchPlaces(center, radiusM, textQuery) {
-  const { Place } = await window.google.maps.importLibrary("places");
+  const { Place, SearchByTextRankPreference } = await window.google.maps.importLibrary("places");
+  const { LatLng } = await window.google.maps.importLibrary("core");
 
   const allPlaces = [];
 
   const request = {
     textQuery,
-    locationRestriction: {
-      circle: {
-        center: { lat: center.lat, lng: center.lng },
-        radius: radiusM,
-      },
+    locationBias: {
+      center: new LatLng(center.lat, center.lng),
+      radius: radiusM,
     },
     fields: [
       "id",
@@ -28,18 +27,13 @@ async function searchPlaces(center, radiusM, textQuery) {
       "primaryType",
       "formattedAddress",
     ],
-    pageSize: 20,
+    maxResultCount: 20,
+    rankPreference: SearchByTextRankPreference.DISTANCE,
   };
 
   try {
-    let response = await Place.searchByText(request);
-    allPlaces.push(...(response.places || []));
-
-    while (response.nextPageToken) {
-      request.pageToken = response.nextPageToken;
-      response = await Place.searchByText(request);
-      allPlaces.push(...(response.places || []));
-    }
+    const { places } = await Place.searchByText(request);
+    allPlaces.push(...(places || []));
   } catch (err) {
     console.error("Places search error:", err);
     throw err;

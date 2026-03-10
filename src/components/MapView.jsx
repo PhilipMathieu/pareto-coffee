@@ -97,7 +97,17 @@ export default function MapView({
       el.addEventListener("click", () => onShopClick(shop.id));
       markersRef.current.push(marker);
     });
-  }, [shops, frontierIds, selectedShopId, onShopClick]);
+
+    // Fit map bounds to show all markers including origin
+    if (shops.length > 0 && origin) {
+      const bounds = new maplibregl.LngLatBounds();
+      bounds.extend([origin.lng, origin.lat]);
+      shops.forEach((shop) => {
+        bounds.extend([shop.location.lng, shop.location.lat]);
+      });
+      map.fitBounds(bounds, { padding: 50, maxZoom: 15 });
+    }
+  }, [shops, frontierIds, selectedShopId, onShopClick, origin]);
 
   // Update walking route
   useEffect(() => {
