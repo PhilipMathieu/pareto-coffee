@@ -1,7 +1,7 @@
 import React, { useRef, useEffect } from "react";
 import { walkingMinutes } from "../lib/geo.js";
 
-export default function ShopList({ shops, frontierIds, selectedShopId, onShopClick }) {
+export default function ShopList({ shops, frontierIds, selectedShopId, onShopClick, onHide }) {
   const listRef = useRef(null);
   const selectedRef = useRef(null);
 
@@ -36,7 +36,7 @@ export default function ShopList({ shops, frontierIds, selectedShopId, onShopCli
             key={shop.id}
             ref={isSelected ? selectedRef : null}
             onClick={() => onShopClick(shop.id)}
-            className={`flex items-center gap-3 px-3 py-2.5 cursor-pointer transition-colors text-sm ${
+            className={`group flex items-center gap-3 px-3 py-2.5 cursor-pointer transition-colors text-sm ${
               isSelected
                 ? "bg-amber-50 border-l-2 border-amber-500"
                 : "hover:bg-gray-50"
@@ -59,6 +59,20 @@ export default function ShopList({ shops, frontierIds, selectedShopId, onShopCli
                 (~{walkingMinutes(shop.distance)} min walk)
               </div>
             </div>
+            {onHide && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onHide(shop.id);
+                }}
+                className="opacity-0 group-hover:opacity-100 p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-all"
+                title="Hide this place"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            )}
           </div>
         );
       })}

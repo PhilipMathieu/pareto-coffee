@@ -5,14 +5,17 @@ import RadiusControl from "./components/RadiusControl.jsx";
 import MapView from "./components/MapView.jsx";
 import ScatterPlot from "./components/ScatterPlot.jsx";
 import ShopList from "./components/ShopList.jsx";
+import HiddenPlacesPanel from "./components/HiddenPlacesPanel.jsx";
 import { useGoogleMaps } from "./hooks/useGoogleMaps.js";
 import { runPlacesSearch } from "./hooks/usePlacesSearch.js";
 import { getWalkingRoute } from "./hooks/useOSRM.js";
 import { paretoFrontier } from "./lib/pareto.js";
 import { CATEGORIES } from "./lib/categories.js";
+import { useHiddenPlaces } from "./hooks/useHiddenPlaces.js";
 
 export default function App() {
   const { isLoaded: mapsLoaded, error: mapsError } = useGoogleMaps();
+  const { hiddenIds, hide, unhide, clearAll: clearHidden } = useHiddenPlaces();
 
   const [origin, setOrigin] = useState(null);
   const [maxDistance, setMaxDistance] = useState(1000);
@@ -20,14 +23,19 @@ export default function App() {
   const [minReviews] = useState(5);
 
   const [allShops, setAllShops] = useState([]);
-  const [frontierShops, setFrontierShops] = useState([]);
   const [selectedShopId, setSelectedShopId] = useState(null);
   const [walkingRoute, setWalkingRoute] = useState(null);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const frontierIds = new Set(frontierShops.map((s) => s.id));
+  // Filter out hidden shops for display
+  const visibleShops = allShops.filter((s) => !hiddenIds.has(s.id));
+  const hiddenShops = allShops.filter((s) => hiddenIds.has(s.id));
+
+  // Recompute Pareto frontier when visible shops change
+  const frontier = paretoFrontier(visibleShops);
+  const frontierIds = new Set(frontier.map((s) => s.id));
 
   const handleSearch = useCallback(
     async (address) => {
@@ -38,7 +46,6 @@ export default function App() {
       setLoading(true);
       setError(null);
       setAllShops([]);
-      setFrontierShops([]);
       setSelectedShopId(null);
       setWalkingRoute(null);
 
@@ -82,15 +89,7 @@ export default function App() {
           return;
         }
 
-        const frontier = paretoFrontier(shops);
-        const frontierIdSet = new Set(frontier.map((s) => s.id));
-        const shopsWithFrontier = shops.map((s) => ({
-          ...s,
-          isOnFrontier: frontierIdSet.has(s.id),
-        }));
-
-        setAllShops(shopsWithFrontier);
-        setFrontierShops(frontier);
+        setAllShops(shops);
       } catch (err) {
         console.error(err);
         if (err.message?.includes("REQUEST_DENIED") || err.message?.includes("InvalidValueError")) {
@@ -173,7 +172,7 @@ export default function App() {
           <div className="bg-white rounded-lg shadow overflow-hidden" style={{ height: 400 }}>
             <MapView
               origin={origin}
-              shops={allShops}
+              shops={visibleShops}
               frontierIds={frontierIds}
               selectedShopId={selectedShopId}
               walkingRoute={walkingRoute}
@@ -181,9 +180,9 @@ export default function App() {
             />
           </div>
           <div className="bg-white rounded-lg shadow overflow-hidden" style={{ height: 400 }}>
-            {allShops.length > 0 ? (
+            {visibleShops.length > 0 ? (
               <ScatterPlot
-                shops={allShops}
+                shops={visibleShops}
                 frontierIds={frontierIds}
                 selectedShopId={selectedShopId}
                 onShopClick={handleShopClick}
@@ -203,20 +202,29 @@ export default function App() {
           <div className="px-4 py-2.5 border-b border-gray-100 flex items-center justify-between">
             <h2 className="font-semibold text-gray-700 text-sm">
               Results{" "}
-              {allShops.length > 0 && (
+              {visibleShops.length > 0 && (
                 <span className="text-gray-400 font-normal">
-                  ({allShops.length} shops, {frontierShops.length} on frontier)
+                  ({visibleShops.length} shops, {frontier.length} on frontier)
+                  {hiddenShops.length > 0 && `, ${hiddenShops.length} hidden`}
                 </span>
               )}
             </h2>
           </div>
           <ShopList
-            shops={allShops}
+            shops={visibleShops}
             frontierIds={frontierIds}
             selectedShopId={selectedShopId}
             onShopClick={handleShopClick}
+            onHide={hide}
           />
         </div>
+
+        {/* Hidden places panel */}
+        <HiddenPlacesPanel
+          hiddenShops={hiddenShops}
+          onUnhide={unhide}
+          onClearAll={clearHidden}
+        />
       </main>
 
       <footer className="text-center text-xs text-gray-400 py-3">
